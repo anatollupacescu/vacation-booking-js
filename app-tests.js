@@ -63,9 +63,13 @@ When VR:A
 	
 */
 
-QUnit.test( "Can create app", function( assert ) {
-  var app = new App('lolo');
+QUnit.test( "Testing app from the user's perspective", function( assert ) {
+  var app = new VacationBookingApp('lolo', new InMemoryPersistenceService());
   assert.ok( app.name == "lolo", "App name is set correctly" );
   assert.ok( app.isCool === true, "App flag default value is correct");
-  assert.ok( app.makeMoney('shitload') === 'You just made shitload cash', "The amount of money is callculated correctly");
+  var jora = 'jora';
+  var record = new Record(jora, new Date(), new Date(), StatusEnum.AWAITING_DECISION);
+  app.requestVacation(record);
+  assert.ok( app.listRequestsFromUser('iura').equals([]), "Vacation request is registered for the correct user");
+  assert.ok( app.listRequestsFromUser(jora).equals([record]), "Vacation request registered correctly");
 });
