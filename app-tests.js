@@ -33,6 +33,34 @@ should go in the table at the bottom of the page. Upon rejecting a request I wan
 On a separate page I want to see the calendar on the left half of the page and the list of users with approved vacations 
 on the right one. The list on the right has to have a checkbox next to each record and upon checking the box the vacation 
 days should be highlited on the calendar.
+
+Other
+	- data auditing - every action should be logged.
+
+Roles: user (u), manager (m)
+Objects: vacation request record (VR)
+User (u) actions: view, create, remove
+Manager (m) actions: view, accept, reject, cancel
+VR states: awaiting approval [AA], rejected [R], accepted [A]
+Flow:
+
+u -> create VR -> VR:AA
+
+When VR:AA
+	u,m can view VR
+	u can remove VR
+	m can reject VR - VR:R
+	m can accept VR - VR:A
+
+When VR:R
+	u,m can view VR
+	error for any other action -> 'Can not do [action] on a rejected record'
+
+When VR:A
+	u,m can view VR
+	m can cancel VR -> VR removed from the system
+	error for any other action -> 'Can not do [action] on a accepted record'
+	
 */
 
 QUnit.test( "Can create app", function( assert ) {
