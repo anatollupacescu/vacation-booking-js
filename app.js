@@ -8,11 +8,16 @@ PersistenceService.prototype.save = function(record) {
 
 PersistenceService.prototype.getRecordsForUser = function(user) {
 	throw "Must be overridden";
-}
+};
+
+PersistenceService.prototype.remove = function(id) {
+	throw "Must be overridden";
+};
 
 function InMemoryPersistenceService() {
 	PersistenceService.call();
 	this.records = [];
+	this.id = 0;
 }
 
 InMemoryPersistenceService.prototype = Object.create(PersistenceService.prototype);
@@ -20,6 +25,8 @@ InMemoryPersistenceService.prototype.constructor = InMemoryPersistenceService;
 
 InMemoryPersistenceService.prototype.save = function(record) {
 	if (typeof record !== "undefined") {
+	    record.id = this.id;
+	    this.id = this.id + 1;
 		this.records.push(record);
 	} else {
 		throw "Please provide a record";
@@ -29,6 +36,12 @@ InMemoryPersistenceService.prototype.save = function(record) {
 InMemoryPersistenceService.prototype.getRecordsForUser = function(user) {
     return this.records.filter(function(item) {
         return JSON.stringify(item.user) === JSON.stringify(user);
+    });
+};
+
+InMemoryPersistenceService.prototype.remove = function(id) {
+    this.records = this.records.filter(function(item) {
+        return item.id !== id;
     });
 };
 
@@ -42,7 +55,8 @@ var Role = Object.freeze({
 	NON_MANAGER: 2
 });
 
-function Record(user, start, end, status) {
+function Record(id, user, start, end, status) {
+    this.id = id;
 	this.user = user;
 	this.startDate = start;
 	this.endDate = end;
@@ -108,15 +122,23 @@ UserActions.prototype.submitVacationRequest = function(start, end) {
 	if (typeof start === "undefined" || typeof end === "undefined") {
 		throw "Please provide a start and end date";
 	}
-	var record = new Record(this.user, start, end, StatusEnum.AWAITING_DECISION);
+	var record = new Record(null, this.user, start, end, StatusEnum.AWAITING_DECISION);
 	this.persistenceService.save(record);
 };
 
 UserActions.prototype.cancelVacationRequest = function(id) {
-	//filter records
-	//get record with id and user
-	//throw error if not found
-	//throw error if status is not StatusEnum.AWAITING
+	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	var requestsForId = myRequests.filter(function(item) {
+	    return item.id === id;
+	});
+	if(requestsForId.length !== 1) {
+	    throw "Expected one record";
+	}
+	var recordToCancel = requestsForId[0];
+	if(recordToCancel.status !== StatusEnum.AWAITING_DECISION) {
+	    throw "Can not cancel record";
+	}
+	this.persistenceService.remove(recordToCancel.id);
 };
 
 UserActions.prototype.listPendingVacationRequests = function() {
@@ -127,13 +149,17 @@ UserActions.prototype.listPendingVacationRequests = function() {
 };
 
 UserActions.prototype.listRejectedVacationRequests = function() {
-	return new Array();
-	//filter records
-	//based on REJECTED and user
+	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	return myRequests.filter(function(item) {
+	    return item.status === StatusEnum.REJECTED;
+	});
 };
 
 UserActions.prototype.listAcceptedVacationRequests = function() {
-	return new Array();
+	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	return myRequests.filter(function(item) {
+	    return item.status === StatusEnum.ACCEPTED;
+	});
 };
 
 UserActions.prototype.removeRejectedVacationRequest = function(vacationRequestId) {
@@ -150,7 +176,7 @@ ManagerActions.prototype.constructor = VacationBookingApp;
 
 ManagerActions.prototype.listPendingVacationRequests = function() {
 	return this.persistenceService.records.filter(function(item) {
-	    return item.user === this.user && item.status === StatusEnum.AWAITING_DECISION;
+	    return item.status === StatusEnum.AWAITING_DECISION;
 	});
 };
 

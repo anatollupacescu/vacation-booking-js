@@ -314,8 +314,9 @@ function vaseaSubmitsVacationRequest(assert, app, start, end) {
 function vaseaCancelsVacationRequest(assert, app) {
 	var vasea = actionsForVasea(app);
 	var pending = vasea.listPendingVacationRequests();
-	assert.ok (pending.length > 0);
-	vasea.cancelVacationRequest(pending[0].id);
+	assert.ok(pending.length > 0);
+	var id = pending[0].id;
+	vasea.cancelVacationRequest(id);
 }
 
 function joraSubmitsVacationRequest(assert, app, start, end) {
@@ -349,6 +350,10 @@ function createApp() {
 	return new VacationBookingApp(persistence, userAuthList);
 }
 
+function isNotNull(assert, app) {
+	assert.ok (typeof app !== "undefined", "Application created");
+}
+
 QUnit.test( "Test scenario 1", function( assert ) {
   var app = createApp();
   vaseaSeesRecords(assert, app, 0, 0, 0);
@@ -357,8 +362,8 @@ QUnit.test( "Test scenario 1", function( assert ) {
 
   vaseaSubmitsVacationRequest(assert, app, new Date(), new Date());
 
-  vaseaSeesRecords(assert, app, 0, 0, 0);
-  joraSeesRecords(assert, app, 1, 0, 0);
+  vaseaSeesRecords(assert, app, 1, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
   managerSeesRecords(assert, app, 1, 0, 0);
 
   vaseaCancelsVacationRequest(assert, app);
@@ -370,12 +375,15 @@ QUnit.test( "Test scenario 1", function( assert ) {
 
 QUnit.test( "Test scenario 2", function( assert ) {
   var app = createApp();
+  isNotNull(assert, app);
 });
 
 QUnit.test( "Test scenario 3", function( assert ) {
   var app = createApp();
+  isNotNull(assert, app);
 });
 
 QUnit.test( "Test scenario 4", function( assert ) {
   var app = createApp();
+  isNotNull(assert, app);
 });
