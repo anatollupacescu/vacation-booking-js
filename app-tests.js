@@ -5,16 +5,20 @@ Use cases:
 As a user I want to be able to :
 	- submit a time period
 	- see my submitted periods.
-	- remove a previously submited period from the list awaiting approval.
+	- cancel a previously submited period from the list awaiting approval.
+	- see my approved vacations
+	- see my rejected vacation requests
+future 
+	- remove a rejected vacation request record
 	- see an error if the starting date is in the past.
 	- see an error if the end date is in the past.
 	- see an error if the start date is later than the end date.
 	- see an error if the period is less than 1 day.
 	- see an error if the period overlaps a previously submitted period.
-*Mentions*
-On top of my page I want to see a form that would allow me to pick a starting and ending date of my vacation
+*Details*
+	On top of my page I want to see a form that would allow me to pick a starting and ending date of my vacation
 with a button to submit it.
-Bellow the form I want to see a list of my previously submitted time periods divesed in three compartments:
+Bellow the form I want to see a list of my previously submitted time periods divided in three sections:
 	- records of the time periods that are awaiting action from my manager
 	- records of the time periods that have been accepted
 	- records of the time periods that have been rejected, with their corresponding messages.
@@ -26,8 +30,8 @@ As a manager I want to be able to:
 	- mark a vacation request as 'rejected' and add a message.
 	- see the list of rejected vacation requests
 	- see how many users haven't used all their vacation days
-*Mentions*
-On top of the page I want to see the list of vacation requests awaiting approval with 'approve' or 'reject' option next
+*Details*
+	On top of the page I want to see the list of vacation requests awaiting approval with 'approve' or 'reject' option next
 to each one. After I approve a request it should move to the list in the middle of the page. The rejected requests 
 should go in the table at the bottom of the page. Upon rejecting a request I want to have an option to provide a message.
 On a separate page I want to see the calendar on the left half of the page and the list of users with approved vacations 
@@ -61,15 +65,317 @@ When VR:A
 	m can cancel VR -> VR removed from the system
 	error for any other action -> 'Can not do [action] on a accepted record'
 	
+Testing
+
+Test scenario 1
+
+	user logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	manager logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records 
+
+	user logs in
+	user requests valid vacation
+
+	user logs in
+		sees 1 pending records
+		sees 0 accepted records
+		sees 0 rejected records
+
+	manager logs in
+		sees 1 pending records
+		sees 0 accepted recods
+		sees 0 rejected records 
+
+	user logs in
+		sees 1 pending recods
+
+	user logs in
+	user cancels request 1
+
+	user logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+Test scenario 2
+	
+	user logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	user logs in
+	user requests valid vacation
+
+	user logs in
+		sees 1 pending records
+		sees 0 accepted records
+		sees 0 rejected records
+
+	manager logs in
+		sees 1 pending records
+		sees 0 accepted recods
+		sees 0 rejected recods
+
+	manager logs in
+	manager rejects request
+
+	manager logs in
+		sees 0 pending records
+		sees 0 accepted records
+		sees 1 rejected records
+
+	user logs in
+		sees 0 pending records
+		sees 0 accepted records
+		sees 1 rejected records
+
+Test scenario 3
+
+	user logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	manager logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records 
+	
+	user logs in
+	user requests valid vacation
+
+	user logs in
+		sees 1 pending records
+		sees 0 accepted records
+		sees 0 rejected records
+
+	manager logs in
+		sees 1 pending records
+		sees 0 accepted recods
+		sees 0 rejected records 
+
+	manager logs in
+	manager accepts pending vacation request
+
+	manager logs in
+		sees 0 pending records
+		sees 1 accepted records
+		sees 0 rejected records
+
+	user logs in
+		sees 0 pending records
+		sees 1 accepted records
+		sees 0 rejected records
+
+Test scenario 4
+
+	user Jora logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	user Vasea logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	manager logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	user Jora logs in
+	user Jora requests valid vacation
+
+	user Jora logs in
+		sees 1 pending records
+		sees 0 accepted records
+		sees 0 rejected records
+
+	user Vasea logs in
+		sees 0 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	manager logs in
+		sees 1 pending records
+		sees 0 accepted recods
+		sees 0 rejected records 
+
+	user Vasea logs in
+	user Vasea requests valid vacation
+
+	user Jora logs in
+		sees 1 pending records
+		sees 0 accepted records
+		sees 0 rejected records
+
+	user Vasea logs in
+		sees 1 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+
+	manager logs in
+		sees 2 pending records
+		sees 0 accepted recods
+		sees 0 rejected records 
+
+	manager logs in
+	manager accepts Jora's pending vacation request
+
+	user Jora logs in
+		sees 0 pending records
+		sees 1 accepted records
+		sees 0 rejected records
+
+	user Vasea logs in
+		sees 1 pending records
+		sees 0 accepted recods
+		sees 0 rejected records
+	
+	manager logs in
+		sees 0 pending records
+		sees 1 accepted recods
+		sees 0 rejected records 
+		
+	manager logs in
+	manager accepts Vasea's pending vacation request
+
+	user Jora logs in
+		sees 0 pending records
+		sees 1 accepted records
+		sees 0 rejected records
+
+	user Vasea logs in
+		sees 0 pending records
+		sees 1 accepted recods
+		sees 0 rejected records
+	
+	manager logs in
+		sees 0 pending records
+		sees 2 accepted recods
+		sees 0 rejected records 
 */
 
-QUnit.test( "Testing app from the user's perspective", function( assert ) {
-  var app = new VacationBookingApp('lolo', new InMemoryPersistenceService());
-  assert.ok( app.name == "lolo", "App name is set correctly" );
-  assert.ok( app.isCool === true, "App flag default value is correct");
-  var jora = 'jora';
-  var record = new Record(jora, new Date(), new Date(), StatusEnum.AWAITING_DECISION);
-  app.requestVacation(record);
-  assert.ok( app.listRequestsFromUser('iura').equals([]), "Vacation request is registered for the correct user");
-  assert.ok( app.listRequestsFromUser(jora).equals([record]), "Vacation request registered correctly");
+var jora = new User("Jora", "jora@mail.ru");
+var userJoraAuth = new UserAuth(jora, "123456", Role.NON_MANAGER);
+var vasea = new User("Vasilii", "vasea@gmail.com");
+var userVaseaAuth = new UserAuth(vasea, "112233", Role.NON_MANAGER);
+var manager = new User("Glavni", "nacalnic@hotmail.coom");
+var managerAuth = new UserAuth(manager, "qazwsx", Role.MANAGER);
+var userAuthList = [ userJoraAuth, userVaseaAuth, managerAuth ];
+
+function actionsForManager(app) {
+	return app.logIn(manager.email, managerAuth.password);
+}
+
+function actionsForVasea(app) {
+	return app.logIn(vasea.email, userVaseaAuth.password);
+}
+
+function actionsForJora(app) {
+	return	app.logIn(jora.email, userJoraAuth.password);
+}
+
+function managerAcceptsVacationRequetForUser(assert, app, user) {
+	var manager = actionsForManager(app);
+	var pendingRequests = manager.listPendingVacationRequests();
+	assert.ok( pendingRequests.length > 0);
+	var recordForUser = pendingRequests.filter(function(item) {
+		return item.user === user;
+	});
+	assert.ok( recordForUser.user === user);
+	manager.acceptVacationRequest(recordForUser.id);
+}
+
+function managerRejectsVacationRequest(assert, app, user) {
+	var manager = actionsForManager(app);
+	var pendingRequests = manager.listPendingVacationRequests();
+	assert.ok( pendingRequests.length > 0);
+	var recordForUser = pendingRequests.filter(function(item) {
+		return item.user === user;
+	});
+	assert.ok( recordForUser.user === user);
+	manager.rejectVacationRequest(recordForUser.id);
+}
+
+function vaseaSubmitsVacationRequest(assert, app, start, end) {
+	var vasea = actionsForVasea(app);
+	vasea.submitVacationRequest(new Date(), new Date());
+}
+
+function vaseaCancelsVacationRequest(assert, app) {
+	var vasea = actionsForVasea(app);
+	var pending = vasea.listPendingVacationRequests();
+	assert.ok (pending.length > 0);
+	vasea.cancelVacationRequest(pending[0].id);
+}
+
+function joraSubmitsVacationRequest(assert, app, start, end) {
+	var  jora = actionsForJora(app);
+	jora.submitVacationRequest(start, end);
+}
+
+function vaseaSeesRecords(assert, app, pending, accepted, rejected) {
+	var vasea = actionsForVasea(app);
+	assert.ok( vasea.listPendingVacationRequests().length === pending);
+	assert.ok( vasea.listRejectedVacationRequests().length === rejected);
+	assert.ok( vasea.listAcceptedVacationRequests().length === accepted);
+}
+
+function joraSeesRecords(assert, app, pending, accepted, rejected) {
+	var jora = actionsForJora(app);
+	assert.ok( jora.listPendingVacationRequests().length === pending);
+	assert.ok( jora.listRejectedVacationRequests().length === rejected);
+	assert.ok( jora.listAcceptedVacationRequests().length === accepted);
+}
+
+function managerSeesRecords(assert, app, pending, accepted, rejected) {
+	var manager = actionsForManager(app);
+	assert.ok( manager.listPendingVacationRequests().length === pending);
+	assert.ok( manager.listRejectedVacationRequests().length === rejected);
+	assert.ok( manager.listAcceptedVacationRequests().length === accepted);
+}
+
+function createApp() {
+	var persistence = new InMemoryPersistenceService();
+	return new VacationBookingApp(persistence, userAuthList);
+}
+
+QUnit.test( "Test scenario 1", function( assert ) {
+  var app = createApp();
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+
+  vaseaSubmitsVacationRequest(assert, app, new Date(), new Date());
+
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 1, 0, 0);
+  managerSeesRecords(assert, app, 1, 0, 0);
+
+  vaseaCancelsVacationRequest(assert, app);
+
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+});
+
+QUnit.test( "Test scenario 2", function( assert ) {
+  var app = createApp();
+});
+
+QUnit.test( "Test scenario 3", function( assert ) {
+  var app = createApp();
+});
+
+QUnit.test( "Test scenario 4", function( assert ) {
+  var app = createApp();
 });
