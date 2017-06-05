@@ -6,10 +6,6 @@ PersistenceService.prototype.save = function(record) {
 	throw "Must be overridden";
 };
 
-PersistenceService.prototype.list = function() {
-	throw "Must be overridden";
-}
-
 PersistenceService.prototype.getRecordsForUser = function(user) {
 	throw "Must be overridden";
 }
@@ -22,10 +18,6 @@ function InMemoryPersistenceService() {
 InMemoryPersistenceService.prototype = Object.create(PersistenceService.prototype);
 InMemoryPersistenceService.prototype.constructor = InMemoryPersistenceService;
 
-InMemoryPersistenceService.prototype.list = function() {
-	return this.records;
-};
-
 InMemoryPersistenceService.prototype.save = function(record) {
 	if (typeof record !== "undefined") {
 		this.records.push(record);
@@ -35,9 +27,9 @@ InMemoryPersistenceService.prototype.save = function(record) {
 };
 
 InMemoryPersistenceService.prototype.getRecordsForUser = function(user) {
-	return this.records.filter(function(item) {
-		return item.user === user;
-	});
+    return this.records.filter(function(item) {
+        return JSON.stringify(item.user) === JSON.stringify(user);
+    });
 };
 
 var StatusEnum = Object.freeze({
@@ -50,8 +42,7 @@ var Role = Object.freeze({
 	NON_MANAGER: 2
 });
 
-function Record(id, user, start, end, status) {
-	this.id = id;
+function Record(user, start, end, status) {
 	this.user = user;
 	this.startDate = start;
 	this.endDate = end;
@@ -129,7 +120,10 @@ UserActions.prototype.cancelVacationRequest = function(id) {
 };
 
 UserActions.prototype.listPendingVacationRequests = function() {
-	return new Array();
+	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	return myRequests.filter(function(item) {
+	    return item.status === StatusEnum.AWAITING_DECISION;
+	});
 };
 
 UserActions.prototype.listRejectedVacationRequests = function() {
@@ -155,7 +149,9 @@ ManagerActions.prototype = Object.create(ManagerActions.prototype);
 ManagerActions.prototype.constructor = VacationBookingApp;
 
 ManagerActions.prototype.listPendingVacationRequests = function() {
-	return new Array();
+	return this.persistenceService.records.filter(function(item) {
+	    return item.user === this.user && item.status === StatusEnum.AWAITING_DECISION;
+	});
 };
 
 ManagerActions.prototype.listRejectedVacationRequests = function() {
