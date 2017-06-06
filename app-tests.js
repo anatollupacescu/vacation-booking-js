@@ -434,6 +434,36 @@ QUnit.test( "Test scenario 3", function( assert ) {
 
 QUnit.test( "Test scenario 4", function( assert ) {
   var app = createApp();
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+
+  joraSubmitsVacationRequest(assert, app, new Date(), new Date());
+
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 1, 0, 0);
+  managerSeesRecords(assert, app, 1, 0, 0);
+
+  vaseaSubmitsVacationRequest(assert, app, new Date(), new Date());
+  vaseaSeesRecords(assert, app, 1, 0, 0);
+  joraSeesRecords(assert, app, 1, 0, 0);
+  managerSeesRecords(assert, app, 2, 0, 0);
+  
+  managerAcceptsJorasRequest(assert, app);
+
+  vaseaSeesRecords(assert, app, 1, 0, 0);
+  joraSeesRecords(assert, app, 0, 1, 0);
+  managerSeesRecords(assert, app, 1, 1, 0);
+
+  managerAcceptsVaseasRequest(assert, app);
+
+  vaseaSeesRecords(assert, app, 0, 1, 0);
+  joraSeesRecords(assert, app, 0, 1, 0);
+  managerSeesRecords(assert, app, 0, 2, 0);
+});
+
+QUnit.test( "Test scenario 4", function( assert ) {
+  var app = createApp();
   isNotNull(assert, app);
 });
 
