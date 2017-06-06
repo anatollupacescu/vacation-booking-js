@@ -284,13 +284,15 @@ function actionsForJora(app) {
 	return	app.logIn(jora.email, userJoraAuth.password);
 }
 
-function managerAcceptsVacationRequetForUser(assert, app, user) {
+function managerAcceptsVacationRequestForUser(assert, app, user) {
 	var manager = actionsForManager(app);
 	var pendingRequests = manager.listPendingVacationRequests();
 	assert.ok( pendingRequests.length > 0);
-	var recordForUser = pendingRequests.filter(function(item) {
-		return item.user === user;
+	var recordsForUser = pendingRequests.filter(function(item) {
+		return  JSON.stringify(item.user) === JSON.stringify(user);
 	});
+	assert.ok (recordsForUser.length > 0);
+	var recordForUser = recordsForUser[0];
 	assert.ok( recordForUser.user === user);
 	manager.acceptVacationRequest(recordForUser.id);
 }
@@ -300,15 +302,17 @@ function managerRejectsVacationRequest(assert, app, user) {
 	var pendingRequests = manager.listPendingVacationRequests();
 	assert.ok( pendingRequests.length > 0);
 	var recordForUser = pendingRequests.filter(function(item) {
-		return item.user === user;
+		return  JSON.stringify(item.user) === JSON.stringify(user);
 	});
+	assert.ok (recordsForUser.length > 0);
+	var recordForUser = recordsForUser[0];
 	assert.ok( recordForUser.user === user);
 	manager.rejectVacationRequest(recordForUser.id);
 }
 
 function vaseaSubmitsVacationRequest(assert, app, start, end) {
 	var vasea = actionsForVasea(app);
-	vasea.submitVacationRequest(new Date(), new Date());
+	vasea.submitVacationRequest(start, end);
 }
 
 function vaseaCancelsVacationRequest(assert, app) {
@@ -345,6 +349,23 @@ function managerSeesRecords(assert, app, pending, accepted, rejected) {
 	assert.ok( manager.listAcceptedVacationRequests().length === accepted);
 }
 
+function managerAcceptsVaseasRequest(assert, app) {
+	var vasea = actionsForVasea(app);
+	managerAcceptsVacationRequestForUser(assert, app, vasea.user);
+}
+function managerAcceptsJorasRequest(assert, app) {
+	var jora = actionsForJora(app);
+	managerAcceptsVacationRequestForUser(assert, app, jora.user);
+}
+
+function managerRejectsVaseasRequest(assert, app) {
+	var manager = actionsForManager(app);
+	var pending = manager.listPendingVacationRequests();
+	assert.ok ( pending.length > 0);
+	var req = pending[0];
+	manager.rejectVacationRequest(req.id);
+}
+
 function createApp() {
 	var persistence = new InMemoryPersistenceService();
 	return new VacationBookingApp(persistence, userAuthList);
@@ -375,15 +396,53 @@ QUnit.test( "Test scenario 1", function( assert ) {
 
 QUnit.test( "Test scenario 2", function( assert ) {
   var app = createApp();
-  isNotNull(assert, app);
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+
+  vaseaSubmitsVacationRequest(assert, app, new Date(), new Date());
+
+  vaseaSeesRecords(assert, app, 1, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 1, 0, 0);
+
+  managerRejectsVaseasRequest(assert, app);
+
+  vaseaSeesRecords(assert, app, 0, 0, 1);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 1);
 });
 
 QUnit.test( "Test scenario 3", function( assert ) {
   var app = createApp();
-  isNotNull(assert, app);
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+
+  joraSubmitsVacationRequest(assert, app, new Date(), new Date());
+
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 1, 0, 0);
+  managerSeesRecords(assert, app, 1, 0, 0);
+
+  managerAcceptsJorasRequest(assert, app);
+
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 1, 0);
+  managerSeesRecords(assert, app, 0, 1, 0);
 });
 
 QUnit.test( "Test scenario 4", function( assert ) {
+  var app = createApp();
+  isNotNull(assert, app);
+});
+
+QUnit.test( "Test scenario 5", function( assert ) {
+  var app = createApp();
+  isNotNull(assert, app);
+});
+
+QUnit.test( "Test scenario 6", function( assert ) {
   var app = createApp();
   isNotNull(assert, app);
 });

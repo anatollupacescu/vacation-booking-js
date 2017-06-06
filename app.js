@@ -45,6 +45,16 @@ InMemoryPersistenceService.prototype.remove = function(id) {
     });
 };
 
+InMemoryPersistenceService.prototype.update = function(record) {
+	if(typeof record === "undefined" || typeof record.id === "undefined") {
+		throw "Record not valid";
+	}
+	this.records = this.records.filter(function(item) {
+		return item.id !== record.id;
+	});
+	this.records.push(record);
+};
+
 var StatusEnum = Object.freeze({
 	AWAITING_DECISION: 1,
 	ACCEPTED: 2,
@@ -181,25 +191,37 @@ ManagerActions.prototype.listPendingVacationRequests = function() {
 };
 
 ManagerActions.prototype.listRejectedVacationRequests = function() {
-	return new Array();
-	//filter records
-	//based on REJECTED and user
+	return this.persistenceService.records.filter(function(item) {
+	    return item.status === StatusEnum.REJECTED;
+	});
 };
 
 ManagerActions.prototype.listAcceptedVacationRequests = function() {
-	return new Array();
+	return this.persistenceService.records.filter(function(item) {
+	    return item.status === StatusEnum.ACCEPTED;
+	});
 };
 
 ManagerActions.prototype.acceptVacationRequest = function(id) {
-	//filter records
-	//based on id and status AWAITING
-	//if found - change status to ACCEPTED
-	//throw
+	var recordsWithId = this.listPendingVacationRequests().filter(function(item) {
+		return item.id === id;
+	});
+	if(recordsWithId.length !== 1) {
+		throw "Expected to fine one record";
+	}
+	var vacationRequest = recordsWithId[0];
+	vacationRequest.status = StatusEnum.ACCEPTED;
+	this.persistenceService.update(vacationRequest);
 };
 
 ManagerActions.prototype.rejectVacationRequest = function(id) {
-	//filter records
-	//based on id and status AWAITING
-	//if found - change status to REJECTED
-	//throw
+	var recordsWithId = this.listPendingVacationRequests().filter(function(item) {
+		return item.id === id;
+	});
+	if(recordsWithId.length !== 1) {
+		throw "Expected to fine one record";
+	}
+	var vacationRequest = recordsWithId[0];
+	vacationRequest.status = StatusEnum.REJECTED;
+	this.persistenceService.update(vacationRequest);
 };
