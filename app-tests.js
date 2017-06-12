@@ -312,7 +312,7 @@ function managerRejectsVacationRequest(assert, app, user) {
 
 function vaseaSubmitsVacationRequest(assert, app, start, end) {
 	var vasea = actionsForVasea(app);
-	vasea.submitVacationRequest(start, end);
+	return vasea.submitVacationRequest(start, end);
 }
 
 function vaseaCancelsVacationRequest(assert, app) {
@@ -325,7 +325,7 @@ function vaseaCancelsVacationRequest(assert, app) {
 
 function joraSubmitsVacationRequest(assert, app, start, end) {
 	var  jora = actionsForJora(app);
-	jora.submitVacationRequest(start, end);
+	return jora.submitVacationRequest(start, end);
 }
 
 function vaseaSeesRecords(assert, app, pending, accepted, rejected) {
@@ -375,7 +375,7 @@ function isNotNull(assert, app) {
 	assert.ok (typeof app !== "undefined", "Application created");
 }
 
-QUnit.test( "Test scenario 1", function( assert ) {
+QUnit.test( "User can submit and cancel vacation requests", function( assert ) {
   var app = createApp();
   vaseaSeesRecords(assert, app, 0, 0, 0);
   joraSeesRecords(assert, app, 0, 0, 0);
@@ -394,7 +394,19 @@ QUnit.test( "Test scenario 1", function( assert ) {
   managerSeesRecords(assert, app, 0, 0, 0);
 });
 
-QUnit.test( "Test scenario 2", function( assert ) {
+QUnit.test( "User can submit multiple vacation requests", function( assert ) {
+  var app = createApp();
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+  joraSubmitsVacationRequest(assert, app, new Date(), new Date());
+  joraSubmitsVacationRequest(assert, app, new Date(), new Date());
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 2, 0, 0);
+  managerSeesRecords(assert, app, 2, 0, 0);
+});
+
+QUnit.test( "Manager can reject vacation request", function( assert ) {
   var app = createApp();
   vaseaSeesRecords(assert, app, 0, 0, 0);
   joraSeesRecords(assert, app, 0, 0, 0);
@@ -413,7 +425,7 @@ QUnit.test( "Test scenario 2", function( assert ) {
   managerSeesRecords(assert, app, 0, 0, 1);
 });
 
-QUnit.test( "Test scenario 3", function( assert ) {
+QUnit.test( "Manager can accept vacation request", function( assert ) {
   var app = createApp();
   vaseaSeesRecords(assert, app, 0, 0, 0);
   joraSeesRecords(assert, app, 0, 0, 0);
@@ -432,7 +444,7 @@ QUnit.test( "Test scenario 3", function( assert ) {
   managerSeesRecords(assert, app, 0, 1, 0);
 });
 
-QUnit.test( "Test scenario 4", function( assert ) {
+QUnit.test( "Manager can see and accept multiple requests", function( assert ) {
   var app = createApp();
   vaseaSeesRecords(assert, app, 0, 0, 0);
   joraSeesRecords(assert, app, 0, 0, 0);
@@ -462,17 +474,36 @@ QUnit.test( "Test scenario 4", function( assert ) {
   managerSeesRecords(assert, app, 0, 2, 0);
 });
 
-QUnit.test( "Test scenario 4", function( assert ) {
+QUnit.test( "App can have multiple validators", function( assert ) {
+	var validator = new Validator("validator", function(records, date1, date2) {
+		return false;
+	});
   var app = createApp();
+  app.addValidator(validator);
   isNotNull(assert, app);
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+  var failMessages = joraSubmitsVacationRequest(assert, app, new Date(), new Date());
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 1, 0, 0);
+  managerSeesRecords(assert, app, 1, 0, 0);
 });
 
-QUnit.test( "Test scenario 5", function( assert ) {
+QUnit.test( "App can have multiple validators", function( assert ) {
+	var validator1 = new Validator("test 1", function(records, date1, date2) {
+		return true;
+	});
+	var validator2 = new Validator("test 2", function(records, date1, date2) {
+		return true;
+	});
   var app = createApp();
+  app.addValidator(validator1);
+  app.addValidator(validator2);
   isNotNull(assert, app);
-});
-
-QUnit.test( "Test scenario 6", function( assert ) {
-  var app = createApp();
-  isNotNull(assert, app);
+  vaseaSeesRecords(assert, app, 0, 0, 0);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+  var failMessages = joraSubmitsVacationRequest(assert, app, new Date(), new Date());
+  assert.ok (failMessages.length === 2, "Received two validation messages");
 });

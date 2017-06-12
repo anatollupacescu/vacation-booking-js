@@ -49,9 +49,7 @@ InMemoryPersistenceService.prototype.update = function(record) {
 	if(typeof record === "undefined" || typeof record.id === "undefined") {
 		throw "Record not valid";
 	}
-	this.records = this.records.filter(function(item) {
-		return item.id !== record.id;
-	});
+	this.remove(record.id);
 	this.records.push(record);
 };
 
@@ -84,9 +82,15 @@ function UserAuth(user, password, role) {
 	this.role = role;
 }
 
-function VacationBookingApp(persistenceService, userAuthList) {
+function Validator(name, func) {
+	this.name = name;
+	this.func = func;
+}
+
+function VacationBookingApp(persistenceService, userAuthList, validators = []) {
 	this.userAuthList = userAuthList;
 	this.persistenceService = persistenceService;
+	this.validators = validators;
 }
 
 VacationBookingApp.prototype.logIn = function(email, password) {
@@ -104,8 +108,15 @@ VacationBookingApp.prototype.logIn = function(email, password) {
 	if (userAuth.role === Role.MANAGER) {
 		return new ManagerActions(user, this.persistenceService);
 	}
-	return new UserActions(user, this.persistenceService);
-}
+	return new UserActions(user, this.persistenceService, this.validators);
+};
+
+VacationBookingApp.prototype.addValidator = function(validator) {
+	if (typeof validator === "undefined") {
+		throw "Please provide a validator";
+	}
+	this.validators.push(validator);
+};
 
 VacationBookingApp.prototype.listPendingVacationRequests = function() {
 	throw "Must be overridden";
@@ -119,8 +130,8 @@ VacationBookingApp.prototype.listAcceptedVacationRequests = function() {
 	throw "Must be overridden";
 };
 
-function UserActions(user, persistenceService) {
-	VacationBookingApp.call(this, persistenceService);
+function UserActions(user, persistenceService, validators) {
+	VacationBookingApp.call(this, persistenceService, [], validators);
 	this.user = user;
 }
 
@@ -131,6 +142,15 @@ UserActions.prototype.constructor = VacationBookingApp;
 UserActions.prototype.submitVacationRequest = function(start, end) {
 	if (typeof start === "undefined" || typeof end === "undefined") {
 		throw "Please provide a start and end date";
+	}
+	var records = this.persistenceService.records;
+	var failedValidators = this.validators.filter(function(validator) {
+		if(validator.func(records, start, end)) {
+			return validator.name;
+		}
+	});
+	if(failedValidators.length > 0) {
+		return failedValidators;
 	}
 	var record = new Record(null, this.user, start, end, StatusEnum.AWAITING_DECISION);
 	this.persistenceService.save(record);
