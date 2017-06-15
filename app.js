@@ -6,7 +6,23 @@ PersistenceService.prototype.save = function(record) {
 	throw "Must be overridden";
 };
 
-PersistenceService.prototype.getRecordsForUser = function(user) {
+PersistenceService.prototype.getRecordsByUser = function(user) {
+	throw "Must be overridden";
+};
+
+PersistenceService.prototype.getRecordsById = function(id) {
+	throw "Must be overridden";
+};
+
+PersistenceService.prototype.getAcceptedRecords = function(user) {
+	throw "Must be overridden";
+};
+
+PersistenceService.prototype.getRejectedRecords = function(user) {
+	throw "Must be overridden";
+};
+
+PersistenceService.prototype.getPendingRecords = function(user) {
 	throw "Must be overridden";
 };
 
@@ -33,10 +49,23 @@ InMemoryPersistenceService.prototype.save = function(record) {
 	}
 };
 
-InMemoryPersistenceService.prototype.getRecordsForUser = function(user) {
+InMemoryPersistenceService.prototype.getRecordsByUser = function(user) {
     return this.records.filter(function(item) {
         return JSON.stringify(item.user) === JSON.stringify(user);
     });
+};
+
+PersistenceService.prototype.getRecordById = function(id) {
+    var records = this.records.filter(function(item) {
+        return item.id === id;
+    });
+    if(records.length > 1) {
+        throw "Multiple records with the same id found";
+    }
+    if(records.length > 0) {
+        return records[0];
+    }
+    return new Record();
 };
 
 InMemoryPersistenceService.prototype.remove = function(id) {
@@ -62,6 +91,24 @@ var Role = Object.freeze({
 	MANAGER: 1,
 	NON_MANAGER: 2
 });
+
+InMemoryPersistenceService.prototype.getAcceptedRecords = function(user) {
+	return this.records.filter(function(item) {
+	    return item.status === StatusEnum.ACCEPTED;
+	});
+};
+
+InMemoryPersistenceService.prototype.getRejectedRecords = function(user) {
+	return this.records.filter(function(item) {
+	    return item.status === StatusEnum.REJECTED;
+	});
+};
+
+PersistenceService.prototype.getPendingRecords = function(user) {
+	return this.records.filter(function(item) {
+	    return item.status === StatusEnum.AWAITING_DECISION;
+	});
+};
 
 function Record(id, user, start, end, status) {
     this.id = id;
@@ -157,7 +204,7 @@ UserActions.prototype.submitVacationRequest = function(start, end) {
 };
 
 UserActions.prototype.cancelVacationRequest = function(id) {
-	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	var myRequests = this.persistenceService.getRecordsByUser(this.user);
 	var requestsForId = myRequests.filter(function(item) {
 	    return item.id === id;
 	});
@@ -172,21 +219,21 @@ UserActions.prototype.cancelVacationRequest = function(id) {
 };
 
 UserActions.prototype.listPendingVacationRequests = function() {
-	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	var myRequests = this.persistenceService.getRecordsByUser(this.user);
 	return myRequests.filter(function(item) {
 	    return item.status === StatusEnum.AWAITING_DECISION;
 	});
 };
 
 UserActions.prototype.listRejectedVacationRequests = function() {
-	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	var myRequests = this.persistenceService.getRecordsByUser(this.user);
 	return myRequests.filter(function(item) {
 	    return item.status === StatusEnum.REJECTED;
 	});
 };
 
 UserActions.prototype.listAcceptedVacationRequests = function() {
-	var myRequests = this.persistenceService.getRecordsForUser(this.user);
+	var myRequests = this.persistenceService.getRecordsByUser(this.user);
 	return myRequests.filter(function(item) {
 	    return item.status === StatusEnum.ACCEPTED;
 	});
@@ -205,31 +252,25 @@ ManagerActions.prototype = Object.create(ManagerActions.prototype);
 ManagerActions.prototype.constructor = VacationBookingApp;
 
 ManagerActions.prototype.listPendingVacationRequests = function() {
-	return this.persistenceService.records.filter(function(item) {
-	    return item.status === StatusEnum.AWAITING_DECISION;
-	});
+	return this.persistenceService.getPendingRecords();
 };
 
 ManagerActions.prototype.listRejectedVacationRequests = function() {
-	return this.persistenceService.records.filter(function(item) {
-	    return item.status === StatusEnum.REJECTED;
-	});
+	return this.persistenceService.getRejectedRecords();
 };
 
 ManagerActions.prototype.listAcceptedVacationRequests = function() {
-	return this.persistenceService.records.filter(function(item) {
-	    return item.status === StatusEnum.ACCEPTED;
-	});
+	return this.persistenceService.getAcceptedRecords();
 };
 
 ManagerActions.prototype.acceptVacationRequest = function(id) {
-	var recordsWithId = this.listPendingVacationRequests().filter(function(item) {
-		return item.id === id;
-	});
-	if(recordsWithId.length !== 1) {
-		throw "Expected to fine one record";
+	var vacationRequest = this.persistenceService.getRecordById(id);
+	if(typeof vacationRequest.id === "undefined") {
+	    throw "Record not found";
 	}
-	var vacationRequest = recordsWithId[0];
+	if(vacationRequest.status !== StatusEnum.AWAITING_DECISION) {
+		throw "Record is not awaiting decision";
+	}
 	vacationRequest.status = StatusEnum.ACCEPTED;
 	this.persistenceService.update(vacationRequest);
 };
@@ -239,7 +280,7 @@ ManagerActions.prototype.rejectVacationRequest = function(id) {
 		return item.id === id;
 	});
 	if(recordsWithId.length !== 1) {
-		throw "Expected to fine one record";
+		throw "Expected to find one record";
 	}
 	var vacationRequest = recordsWithId[0];
 	vacationRequest.status = StatusEnum.REJECTED;
