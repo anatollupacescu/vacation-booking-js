@@ -381,8 +381,10 @@ QUnit.test( "User can submit and cancel vacation requests", function( assert ) {
   joraSeesRecords(assert, app, 0, 0, 0);
   managerSeesRecords(assert, app, 0, 0, 0);
 
+assert.throws ( function() { jora.cancelVacationRequest(0); }, "Can not cancel non-existent request");
   vaseaSubmitsVacationRequest(assert, app, new Date(), new Date());
 
+assert.throws ( function() { vasea.cancelVacationRequest(1); }, "Can not cancel wrong request");
   vaseaSeesRecords(assert, app, 1, 0, 0);
   joraSeesRecords(assert, app, 0, 0, 0);
   managerSeesRecords(assert, app, 1, 0, 0);
@@ -490,13 +492,24 @@ QUnit.test( "App can have multiple validators", function( assert ) {
   managerSeesRecords(assert, app, 1, 0, 0);
 });
 
+QUnit.test( "Accepted vacation request can not be accepted or rejected", function( assert ) {
+    var app = createApp();
+    var vasea = actionsForVasea(app);
+    vasea.submitVacationRequest(new Date(), new Date());
+    var manager = actionsForManager(app);
+    assert.throws( function() { manager.cancelVacationRequest(0); }, "Can not cancel a not accepted request");
+    managerAcceptsVacationRequestForUser(assert, app, vasea.user);
+    assert.throws( function() { manager.acceptVacationRequest(0); }, "Can not accept accepted request");
+    assert.throws( function() { manager.rejectVacationRequest(0); }, "Can not reject accepted request");
+});
+
 QUnit.test( "App can have multiple validators", function( assert ) {
-	var validator1 = new Validator("test 1", function(records, date1, date2) {
-		return true;
-	});
-	var validator2 = new Validator("test 2", function(records, date1, date2) {
-		return true;
-	});
+    var validator1 = new Validator("test 1", function(records, date1, date2) {
+    	return true;
+    });
+    var validator2 = new Validator("test 2", function(records, date1, date2) {
+    	return true;
+    });
   var app = createApp();
   app.addValidator(validator1);
   app.addValidator(validator2);

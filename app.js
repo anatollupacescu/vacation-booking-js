@@ -14,15 +14,7 @@ PersistenceService.prototype.getRecordsById = function(id) {
 	throw "Must be overridden";
 };
 
-PersistenceService.prototype.getAcceptedRecords = function(user) {
-	throw "Must be overridden";
-};
-
-PersistenceService.prototype.getRejectedRecords = function(user) {
-	throw "Must be overridden";
-};
-
-PersistenceService.prototype.getPendingRecords = function(user) {
+PersistenceService.prototype.getRecordsByStatus = function(status) {
 	throw "Must be overridden";
 };
 
@@ -55,7 +47,7 @@ InMemoryPersistenceService.prototype.getRecordsByUser = function(user) {
     });
 };
 
-PersistenceService.prototype.getRecordById = function(id) {
+InMemoryPersistenceService.prototype.getRecordById = function(id) {
     var records = this.records.filter(function(item) {
         return item.id === id;
     });
@@ -66,6 +58,12 @@ PersistenceService.prototype.getRecordById = function(id) {
         return records[0];
     }
     return new Record();
+};
+
+InMemoryPersistenceService.prototype.getRecordsByStatus = function(status) {
+    return this.records.filter(function(item) {
+        return item.status === status;
+    });
 };
 
 InMemoryPersistenceService.prototype.remove = function(id) {
@@ -87,28 +85,11 @@ var StatusEnum = Object.freeze({
 	ACCEPTED: 2,
 	REJECTED: 3
 });
+
 var Role = Object.freeze({
 	MANAGER: 1,
 	NON_MANAGER: 2
 });
-
-InMemoryPersistenceService.prototype.getAcceptedRecords = function(user) {
-	return this.records.filter(function(item) {
-	    return item.status === StatusEnum.ACCEPTED;
-	});
-};
-
-InMemoryPersistenceService.prototype.getRejectedRecords = function(user) {
-	return this.records.filter(function(item) {
-	    return item.status === StatusEnum.REJECTED;
-	});
-};
-
-PersistenceService.prototype.getPendingRecords = function(user) {
-	return this.records.filter(function(item) {
-	    return item.status === StatusEnum.AWAITING_DECISION;
-	});
-};
 
 function Record(id, user, start, end, status) {
     this.id = id;
@@ -252,15 +233,15 @@ ManagerActions.prototype = Object.create(ManagerActions.prototype);
 ManagerActions.prototype.constructor = VacationBookingApp;
 
 ManagerActions.prototype.listPendingVacationRequests = function() {
-	return this.persistenceService.getPendingRecords();
+	return this.persistenceService.getRecordsByStatus(StatusEnum.AWAITING_DECISION);
 };
 
 ManagerActions.prototype.listRejectedVacationRequests = function() {
-	return this.persistenceService.getRejectedRecords();
+	return this.persistenceService.getRecordsByStatus(StatusEnum.REJECTED);
 };
 
 ManagerActions.prototype.listAcceptedVacationRequests = function() {
-	return this.persistenceService.getAcceptedRecords();
+	return this.persistenceService.getRecordsByStatus(StatusEnum.ACCEPTED);
 };
 
 ManagerActions.prototype.acceptVacationRequest = function(id) {
@@ -276,13 +257,13 @@ ManagerActions.prototype.acceptVacationRequest = function(id) {
 };
 
 ManagerActions.prototype.rejectVacationRequest = function(id) {
-	var recordsWithId = this.listPendingVacationRequests().filter(function(item) {
-		return item.id === id;
-	});
-	if(recordsWithId.length !== 1) {
-		throw "Expected to find one record";
+	var vacationRequest = this.persistenceService.getRecordById(id);
+	if(typeof vacationRequest.id === "undefined") {
+	    throw "Record not found";
 	}
-	var vacationRequest = recordsWithId[0];
+	if(vacationRequest.status !== StatusEnum.AWAITING_DECISION) {
+		throw "Record is not awaiting decision";
+	}
 	vacationRequest.status = StatusEnum.REJECTED;
 	this.persistenceService.update(vacationRequest);
 };
