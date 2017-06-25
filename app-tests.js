@@ -520,3 +520,37 @@ QUnit.test( "App can have multiple validators", function( assert ) {
   var failMessages = joraSubmitsVacationRequest(assert, app, new Date(), new Date());
   assert.ok (failMessages.length === 2, "Received two validation messages");
 });
+
+QUnit.test( "Overlapping dates validator", function( assert ) {
+    var overlappingDatesValidator = new Validator("test 1", function(existingArr, start, end) {
+    	var conflictingDates = existingArr.filter(function(item){
+    		return !(start > item.endDate || end < item.startDate);
+    	});
+    	return conflictingDates.length > 0;
+    });
+  var app = createApp();
+  app.addValidator(overlappingDatesValidator);
+  isNotNull(assert, app);
+  joraSeesRecords(assert, app, 0, 0, 0);
+  managerSeesRecords(assert, app, 0, 0, 0);
+  var failMessages = joraSubmitsVacationRequest(assert, app, new Date("2015-03-25"), new Date("2015-03-28"));
+  assert.ok (failMessages.length === 0, "First vacation should work");
+  joraSeesRecords(assert, app, 1, 0, 0);
+  managerSeesRecords(assert, app, 1, 0, 0);
+  var failMessages = joraSubmitsVacationRequest(assert, app, new Date("2015-03-15"), new Date("2015-03-22"));
+  assert.ok (failMessages.length === 0, "Non-overlapping vacation should work");
+  joraSeesRecords(assert, app, 2, 0, 0);
+  managerSeesRecords(assert, app, 2, 0, 0);
+  var failMessages = joraSubmitsVacationRequest(assert, app, new Date("2015-03-13"), new Date("2015-03-16"));
+  assert.ok (failMessages.length === 1, "Validation failed as expected");
+  joraSeesRecords(assert, app, 2, 0, 0);
+  managerSeesRecords(assert, app, 2, 0, 0);
+  var failMessages = joraSubmitsVacationRequest(assert, app, new Date("2015-03-16"), new Date("2015-03-17"));
+  assert.ok (failMessages.length === 1, "Validation failed as expected");
+  joraSeesRecords(assert, app, 2, 0, 0);
+  managerSeesRecords(assert, app, 2, 0, 0);
+  var failMessages = joraSubmitsVacationRequest(assert, app, new Date("2015-03-28"), new Date("2015-03-29"));
+  assert.ok (failMessages.length === 1, "Validation failed as expected");
+  joraSeesRecords(assert, app, 2, 0, 0);
+  managerSeesRecords(assert, app, 2, 0, 0);
+});

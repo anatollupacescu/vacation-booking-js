@@ -182,6 +182,7 @@ UserActions.prototype.submitVacationRequest = function(start, end) {
 	}
 	var record = new Record(null, this.user, start, end, StatusEnum.AWAITING_DECISION);
 	this.persistenceService.save(record);
+	return [];
 };
 
 UserActions.prototype.cancelVacationRequest = function(id) {
